@@ -1,0 +1,493 @@
+{% extends "base.html" %}
+
+{% block title %}Логи доставки - AGU ScheduleBot Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    
+    .stat-card .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #333;
+    }
+    
+    .stat-card .stat-label {
+        font-size: 0.8rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .filters-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .filters-card h3 {
+        margin-bottom: 1rem;
+        color: #333;
+        font-size: 1.1rem;
+    }
+    
+    .filters-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: flex-end;
+    }
+    
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .filter-group label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #555;
+    }
+    
+    .filter-group select,
+    .filter-group input {
+        padding: 0.5rem 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        min-width: 150px;
+    }
+    
+    .filter-group input[type="date"] {
+        min-width: 140px;
+    }
+    
+    .filter-group select:focus,
+    .filter-group input:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+    
+    .btn-filter {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 0.5rem 1.25rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background 0.3s;
+    }
+    
+    .btn-filter:hover {
+        background: #5a67d8;
+    }
+    
+    .btn-reset {
+        background: #e5e7eb;
+        color: #333;
+        border: none;
+        padding: 0.5rem 1.25rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        text-decoration: none;
+        transition: background 0.3s;
+    }
+    
+    .btn-reset:hover {
+        background: #d1d5db;
+    }
+    
+    .btn-export {
+        background: #059669;
+        color: white;
+        border: none;
+        padding: 0.5rem 1.25rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        text-decoration: none;
+        transition: background 0.3s;
+        margin-left: auto;
+    }
+    
+    .btn-export:hover {
+        background: #047857;
+    }
+    
+    .table-container {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow-x: auto;
+    }
+    
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .table-header h2 {
+        font-size: 1.25rem;
+        color: #333;
+    }
+    
+    .results-count {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+    
+    thead {
+        background: #f9fafb;
+    }
+    
+    th {
+        padding: 0.75rem 0.5rem;
+        text-align: left;
+        font-weight: 600;
+        color: #666;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e5e7eb;
+        white-space: nowrap;
+    }
+    
+    td {
+        padding: 0.75rem 0.5rem;
+        border-bottom: 1px solid #f3f4f6;
+        vertical-align: middle;
+    }
+    
+    tbody tr:hover {
+        background: #f9fafb;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .status-sent {
+        background: #d1fae5;
+        color: #059669;
+    }
+    
+    .status-error {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+    
+    .type-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .type-morning {
+        background: #dbeafe;
+        color: #2563eb;
+    }
+    
+    .type-reminder {
+        background: #fef3c7;
+        color: #d97706;
+    }
+    
+    .type-broadcast {
+        background: #e0e7ff;
+        color: #4f46e5;
+    }
+    
+    .error-text {
+        color: #dc2626;
+        font-size: 0.8rem;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .error-text:hover {
+        white-space: normal;
+        overflow: visible;
+    }
+    
+    .user-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+    }
+    
+    .user-name {
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .user-tg {
+        font-size: 0.75rem;
+        color: #666;
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .pagination a,
+    .pagination span {
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .pagination a {
+        background: #e5e7eb;
+        color: #333;
+        transition: background 0.3s;
+    }
+    
+    .pagination a:hover {
+        background: #d1d5db;
+    }
+    
+    .pagination .active {
+        background: #667eea;
+        color: white;
+    }
+    
+    .pagination .disabled {
+        background: #f3f4f6;
+        color: #999;
+        cursor: not-allowed;
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: 3rem;
+        color: #999;
+        font-style: italic;
+    }
+    
+    .page-info {
+        color: #666;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 style="color: white; margin-bottom: 2rem; font-size: 2rem;">📋 Логи доставки</h1>
+
+<!-- Statistics -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.total }}</div>
+        <div class="stat-label">Всего</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: #059669;">{{ stats.sent }}</div>
+        <div class="stat-label">Успешно</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: #dc2626;">{{ stats.errors }}</div>
+        <div class="stat-label">Ошибки</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: #2563eb;">{{ stats.morning }}</div>
+        <div class="stat-label">Утренние</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: #d97706;">{{ stats.reminder }}</div>
+        <div class="stat-label">Напоминания</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: #4f46e5;">{{ stats.broadcast }}</div>
+        <div class="stat-label">Рассылки</div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="filters-card">
+    <h3>🔍 Фильтры</h3>
+    <form method="GET" action="/admin/logs" class="filters-form">
+        <div class="filter-group">
+            <label for="message_type">Тип</label>
+            <select id="message_type" name="message_type">
+                <option value="">Все типы</option>
+                <option value="morning" {% if filters.message_type == 'morning' %}selected{% endif %}>🌅 Утреннее</option>
+                <option value="reminder" {% if filters.message_type == 'reminder' %}selected{% endif %}>⏰ Напоминание</option>
+                <option value="broadcast" {% if filters.message_type == 'broadcast' %}selected{% endif %}>📢 Рассылка</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label for="status">Статус</label>
+            <select id="status" name="status">
+                <option value="">Все статусы</option>
+                <option value="sent" {% if filters.status == 'sent' %}selected{% endif %}>✅ Успешно</option>
+                <option value="error" {% if filters.status == 'error' %}selected{% endif %}>❌ Ошибка</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label for="date_from">С даты</label>
+            <input type="date" id="date_from" name="date_from" value="{{ filters.date_from }}">
+        </div>
+        
+        <div class="filter-group">
+            <label for="date_to">По дату</label>
+            <input type="date" id="date_to" name="date_to" value="{{ filters.date_to }}">
+        </div>
+        
+        <button type="submit" class="btn-filter">Применить</button>
+        <a href="/admin/logs" class="btn-reset">Сбросить</a>
+        
+        <a href="/admin/logs/export?message_type={{ filters.message_type }}&status={{ filters.status }}&date_from={{ filters.date_from }}&date_to={{ filters.date_to }}" class="btn-export">
+            📥 Экспорт CSV
+        </a>
+    </form>
+</div>
+
+<!-- Table -->
+<div class="table-container">
+    <div class="table-header">
+        <h2>📊 Записи доставки</h2>
+        <span class="results-count">Найдено: {{ pagination.total_count }}</span>
+    </div>
+    
+    {% if logs %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Дата/Время</th>
+                <th>Тип</th>
+                <th>Пользователь</th>
+                <th>Направление</th>
+                <th>Статус</th>
+                <th>Ошибка</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.id }}</td>
+                <td style="white-space: nowrap;">{{ log.delivery_time }}</td>
+                <td>
+                    {% if log.message_type == 'morning' %}
+                    <span class="type-badge type-morning">🌅 Утро</span>
+                    {% elif log.message_type == 'reminder' %}
+                    <span class="type-badge type-reminder">⏰ Напом.</span>
+                    {% elif log.message_type == 'broadcast' %}
+                    <span class="type-badge type-broadcast">📢 Рассылка</span>
+                    {% else %}
+                    <span class="type-badge">{{ log.message_type }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="user-info">
+                        <span class="user-name">{{ log.user_name }}</span>
+                        {% if log.tg_id %}
+                        <span class="user-tg">ID: {{ log.tg_id }}</span>
+                        {% endif %}
+                    </div>
+                </td>
+                <td>
+                    {% if log.direction_name != 'N/A' %}
+                    {{ log.direction_name }} ({{ log.course }} курс)
+                    {% else %}
+                    <span style="color: #999;">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if log.status == 'sent' %}
+                    <span class="status-badge status-sent">✓ Успешно</span>
+                    {% else %}
+                    <span class="status-badge status-error">✗ Ошибка</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if log.error_message %}
+                    <span class="error-text" title="{{ log.error_message }}">{{ log.error_message }}</span>
+                    {% else %}
+                    <span style="color: #999;">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- Pagination -->
+    {% if pagination.total_pages > 1 %}
+    <div class="pagination">
+        {% if pagination.has_prev %}
+        <a href="/admin/logs?page={{ pagination.page - 1 }}&message_type={{ filters.message_type }}&status={{ filters.status }}&date_from={{ filters.date_from }}&date_to={{ filters.date_to }}">← Назад</a>
+        {% else %}
+        <span class="disabled">← Назад</span>
+        {% endif %}
+        
+        {% for p in pagination.pages %}
+        {% if p == pagination.page %}
+        <span class="active">{{ p }}</span>
+        {% else %}
+        <a href="/admin/logs?page={{ p }}&message_type={{ filters.message_type }}&status={{ filters.status }}&date_from={{ filters.date_from }}&date_to={{ filters.date_to }}">{{ p }}</a>
+        {% endif %}
+        {% endfor %}
+        
+        {% if pagination.has_next %}
+        <a href="/admin/logs?page={{ pagination.page + 1 }}&message_type={{ filters.message_type }}&status={{ filters.status }}&date_from={{ filters.date_from }}&date_to={{ filters.date_to }}">Вперёд →</a>
+        {% else %}
+        <span class="disabled">Вперёд →</span>
+        {% endif %}
+        
+        <span class="page-info">
+            Страница {{ pagination.page }} из {{ pagination.total_pages }}
+        </span>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div class="no-data">
+        Нет записей, соответствующих фильтрам
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

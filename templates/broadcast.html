@@ -1,0 +1,504 @@
+{% extends "base.html" %}
+
+{% block title %}Рассылка - AGU ScheduleBot Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .broadcast-container {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 2rem;
+    }
+    
+    @media (max-width: 1024px) {
+        .broadcast-container {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .form-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-card h2 {
+        margin-bottom: 1.5rem;
+        color: #333;
+        font-size: 1.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .form-group small {
+        display: block;
+        margin-top: 0.25rem;
+        color: #666;
+        font-size: 0.85rem;
+    }
+    
+    textarea {
+        width: 100%;
+        min-height: 200px;
+        padding: 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 1rem;
+        resize: vertical;
+        transition: border-color 0.3s;
+    }
+    
+    textarea:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+    
+    select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 1rem;
+        background: white;
+        cursor: pointer;
+        transition: border-color 0.3s;
+    }
+    
+    select:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+    
+    .recipient-count {
+        background: #dbeafe;
+        color: #2563eb;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .recipient-count .count {
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-primary:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .preview-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 2rem;
+    }
+    
+    .preview-card h3 {
+        margin-bottom: 1rem;
+        color: #333;
+        font-size: 1.25rem;
+    }
+    
+    .preview-phone {
+        background: #1a1a2e;
+        border-radius: 20px;
+        padding: 1rem;
+        min-height: 300px;
+    }
+    
+    .preview-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #333;
+        margin-bottom: 1rem;
+    }
+    
+    .preview-avatar {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+    
+    .preview-name {
+        color: white;
+        font-weight: 600;
+    }
+    
+    .preview-message {
+        background: #2d2d44;
+        color: white;
+        padding: 0.75rem 1rem;
+        border-radius: 0 12px 12px 12px;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+    
+    .preview-placeholder {
+        color: #666;
+        text-align: center;
+        padding: 2rem;
+        font-style: italic;
+    }
+    
+    .alert {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .alert-success {
+        background: #d1fae5;
+        color: #059669;
+        border-left: 4px solid #059669;
+    }
+    
+    .alert-error {
+        background: #fee2e2;
+        color: #dc2626;
+        border-left: 4px solid #dc2626;
+    }
+    
+    .alert-warning {
+        background: #fef3c7;
+        color: #d97706;
+        border-left: 4px solid #d97706;
+    }
+    
+    .optgroup-label {
+        font-weight: 700;
+        color: #333;
+    }
+    
+    .confirm-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .confirm-modal.active {
+        display: flex;
+    }
+    
+    .modal-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        max-width: 400px;
+        text-align: center;
+    }
+    
+    .modal-content h3 {
+        margin-bottom: 1rem;
+        color: #333;
+    }
+    
+    .modal-content p {
+        margin-bottom: 1.5rem;
+        color: #666;
+    }
+    
+    .modal-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+    }
+    
+    .btn-cancel {
+        background: #e5e7eb;
+        color: #333;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+    }
+    
+    .btn-confirm {
+        background: #059669;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+    }
+    
+    .char-count {
+        text-align: right;
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 0.25rem;
+    }
+    
+    .char-count.warning {
+        color: #d97706;
+    }
+    
+    .char-count.error {
+        color: #dc2626;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 style="color: white; margin-bottom: 2rem; font-size: 2rem;">📢 Рассылка сообщений</h1>
+
+{% if request.query_params.get('success') %}
+<div class="alert alert-success">
+    <span>✅</span>
+    <span>Рассылка завершена! Отправлено: <strong>{{ request.query_params.get('success') }}</strong>, 
+    Ошибок: <strong>{{ request.query_params.get('errors', 0) }}</strong></span>
+</div>
+{% endif %}
+
+{% if request.query_params.get('error') == 'no_users' %}
+<div class="alert alert-warning">
+    <span>⚠️</span>
+    <span>Нет активных пользователей для выбранного фильтра</span>
+</div>
+{% endif %}
+
+<div class="broadcast-container">
+    <div class="form-card">
+        <h2>📝 Новая рассылка</h2>
+        
+        <form id="broadcastForm" method="POST" action="/admin/broadcast/send">
+            <div class="form-group">
+                <label for="target">Получатели</label>
+                <select id="target" name="target" required onchange="updateRecipientCount()">
+                    <option value="all">📊 Все пользователи ({{ total_users }})</option>
+                    {% for course in [1, 2, 3, 4] %}
+                    {% if course in users_by_course %}
+                    <option value="course_{{ course }}">🎓 {{ course }} курс ({{ users_by_course.get(course, 0) }})</option>
+                    {% endif %}
+                    {% endfor %}
+                    {% for course, directions in directions_by_course.items() | sort %}
+                    <optgroup label="Направления {{ course }} курса">
+                        {% for direction in directions %}
+                        <option value="direction_{{ direction.id }}">
+                            📚 {{ direction.name }} ({{ direction.user_count }})
+                        </option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="recipient-count" id="recipientCount">
+                <span>👥</span>
+                <span>Получат сообщение: <span class="count" id="countValue">{{ total_users }}</span> пользователей</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="message_text">Текст сообщения</label>
+                <textarea 
+                    id="message_text" 
+                    name="message_text" 
+                    placeholder="Введите текст сообщения...
+
+Поддерживается HTML-разметка:
+<b>жирный</b>
+<i>курсив</i>
+<code>код</code>
+<a href='url'>ссылка</a>"
+                    required
+                    oninput="updatePreview(); updateCharCount();"
+                ></textarea>
+                <div class="char-count" id="charCount">0 / 4096 символов</div>
+                <small>Поддерживается HTML-разметка для форматирования текста</small>
+            </div>
+            
+            <button type="button" class="btn-primary" onclick="showConfirmModal()">
+                📤 Отправить рассылку
+            </button>
+        </form>
+    </div>
+    
+    <div class="preview-card">
+        <h3>👁️ Предпросмотр</h3>
+        
+        <div class="preview-phone">
+            <div class="preview-header">
+                <div class="preview-avatar">📅</div>
+                <div class="preview-name">AGU ScheduleBot</div>
+            </div>
+            
+            <div id="previewContent">
+                <div class="preview-placeholder">
+                    Начните вводить текст, чтобы увидеть предпросмотр...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="confirm-modal" id="confirmModal">
+    <div class="modal-content">
+        <h3>⚠️ Подтверждение рассылки</h3>
+        <p>Вы уверены, что хотите отправить сообщение <strong id="modalCount">{{ total_users }}</strong> пользователям?</p>
+        <p style="font-size: 0.85rem; color: #999;">Это действие нельзя отменить</p>
+        <div class="modal-buttons">
+            <button type="button" class="btn-cancel" onclick="hideConfirmModal()">Отмена</button>
+            <button type="button" class="btn-confirm" onclick="submitBroadcast()">Отправить</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const totalUsers = {{ total_users }};
+    const usersByCourse = {{ users_by_course | tojson }};
+    
+    function updatePreview() {
+        const text = document.getElementById('message_text').value;
+        const previewContent = document.getElementById('previewContent');
+        
+        if (text.trim() === '') {
+            previewContent.innerHTML = `
+                <div class="preview-placeholder">
+                    Начните вводить текст, чтобы увидеть предпросмотр...
+                </div>
+            `;
+        } else {
+            // Basic HTML sanitization for preview (keeping allowed tags)
+            let sanitizedText = text
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/&lt;b&gt;/gi, '<b>')
+                .replace(/&lt;\/b&gt;/gi, '</b>')
+                .replace(/&lt;i&gt;/gi, '<i>')
+                .replace(/&lt;\/i&gt;/gi, '</i>')
+                .replace(/&lt;code&gt;/gi, '<code>')
+                .replace(/&lt;\/code&gt;/gi, '</code>')
+                .replace(/&lt;u&gt;/gi, '<u>')
+                .replace(/&lt;\/u&gt;/gi, '</u>')
+                .replace(/&lt;s&gt;/gi, '<s>')
+                .replace(/&lt;\/s&gt;/gi, '</s>');
+            
+            previewContent.innerHTML = `<div class="preview-message">${sanitizedText}</div>`;
+        }
+    }
+    
+    function updateCharCount() {
+        const text = document.getElementById('message_text').value;
+        const charCount = document.getElementById('charCount');
+        const count = text.length;
+        
+        charCount.textContent = `${count} / 4096 символов`;
+        charCount.className = 'char-count';
+        
+        if (count > 4096) {
+            charCount.classList.add('error');
+        } else if (count > 3500) {
+            charCount.classList.add('warning');
+        }
+    }
+    
+    async function updateRecipientCount() {
+        const target = document.getElementById('target').value;
+        const countValue = document.getElementById('countValue');
+        const modalCount = document.getElementById('modalCount');
+        
+        try {
+            const response = await fetch(`/admin/broadcast/api/user_count?target=${target}`);
+            const data = await response.json();
+            countValue.textContent = data.count;
+            modalCount.textContent = data.count;
+        } catch (e) {
+            console.error('Failed to fetch user count:', e);
+        }
+    }
+    
+    function showConfirmModal() {
+        const text = document.getElementById('message_text').value;
+        
+        if (!text.trim()) {
+            alert('Введите текст сообщения');
+            return;
+        }
+        
+        if (text.length > 4096) {
+            alert('Сообщение слишком длинное (максимум 4096 символов)');
+            return;
+        }
+        
+        document.getElementById('confirmModal').classList.add('active');
+    }
+    
+    function hideConfirmModal() {
+        document.getElementById('confirmModal').classList.remove('active');
+    }
+    
+    function submitBroadcast() {
+        hideConfirmModal();
+        showLoading('Отправка рассылки...');
+        document.getElementById('broadcastForm').submit();
+    }
+    
+    // Close modal on outside click
+    document.getElementById('confirmModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            hideConfirmModal();
+        }
+    });
+</script>
+{% endblock %}

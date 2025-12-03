@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if mode == 'create' %}Добавить направление{% else %}Редактировать направление{% endif %} - AGU ScheduleBot Admin
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .form-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .form-header h2 {
+        font-size: 1.8rem;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #333;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    
+    .form-group label .required {
+        color: #ef4444;
+    }
+    
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+        box-sizing: border-box;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 1.5rem;
+        border-top: 2px solid #e5e7eb;
+    }
+    
+    .btn {
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        border: none;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #5568d3;
+    }
+    
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #4b5563;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-header">
+        <h2>{% if mode == 'create' %}➕ Добавить направление{% else %}✏️ Редактировать направление{% endif %}</h2>
+    </div>
+    
+    <form method="POST" action="{% if mode == 'create' %}/admin/directions/new{% else %}/admin/directions/{{ direction.id }}/edit{% endif %}" data-loading="{% if mode == 'create' %}Создание направления...{% else %}Сохранение...{% endif %}">
+        <div class="form-group">
+            <label for="name">Название направления <span class="required">*</span></label>
+            <input 
+                type="text" 
+                id="name" 
+                name="name" 
+                value="{% if direction %}{{ direction.name }}{% endif %}"
+                required
+                placeholder="Например: Прикладная математика"
+            >
+        </div>
+        
+        <div class="form-group">
+            <label for="course">Курс <span class="required">*</span></label>
+            <select id="course" name="course" required>
+                <option value="">Выберите курс</option>
+                <option value="1" {% if direction and direction.course == 1 %}selected{% endif %}>1 курс</option>
+                <option value="2" {% if direction and direction.course == 2 %}selected{% endif %}>2 курс</option>
+                <option value="3" {% if direction and direction.course == 3 %}selected{% endif %}>3 курс</option>
+                <option value="4" {% if direction and direction.course == 4 %}selected{% endif %}>4 курс</option>
+            </select>
+        </div>
+        
+        <div class="form-actions">
+            <a href="/admin/directions" class="btn btn-secondary">Отмена</a>
+            <button type="submit" class="btn btn-primary">
+                {% if mode == 'create' %}✅ Создать{% else %}💾 Сохранить{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

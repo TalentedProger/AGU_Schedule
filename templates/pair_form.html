@@ -1,0 +1,498 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if mode == 'create' %}Добавить пару{% else %}Редактировать пару{% endif %} - AGU ScheduleBot Admin
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        max-width: 900px;
+    }
+    
+    .form-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .form-header h2 {
+        font-size: 1.8rem;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-header p {
+        color: #666;
+        font-size: 0.95rem;
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+    
+    .form-group label {
+        margin-bottom: 0.5rem;
+        color: #333;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    
+    .form-group label .required {
+        color: #ef4444;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+    
+    .form-group textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+    
+    /* Autocomplete styles */
+    .autocomplete-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+    }
+    
+    .autocomplete-list.show {
+        display: block;
+    }
+    
+    .autocomplete-item {
+        padding: 0.75rem;
+        cursor: pointer;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .autocomplete-item:hover,
+    .autocomplete-item.selected {
+        background: #f3f4f6;
+    }
+    
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+    
+    .directions-section {
+        margin: 2rem 0;
+        padding: 1.5rem;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+    
+    .directions-section h3 {
+        font-size: 1.2rem;
+        color: #333;
+        margin-bottom: 1rem;
+    }
+    
+    .directions-by-course {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .course-group {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 2px solid #e5e7eb;
+    }
+    
+    .course-group h4 {
+        font-size: 1rem;
+        color: #667eea;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .checkbox-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .checkbox-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+    
+    .checkbox-item label {
+        margin: 0;
+        cursor: pointer;
+        font-weight: normal;
+        font-size: 0.9rem;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 2rem;
+        border-top: 2px solid #e5e7eb;
+    }
+    
+    .btn {
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        border: none;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #5568d3;
+    }
+    
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #4b5563;
+    }
+    
+    .helper-text {
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 0.25rem;
+    }
+    
+    .error-message {
+        background: #fee2e2;
+        color: #dc2626;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #dc2626;
+    }
+    
+    .select-all-btn {
+        padding: 0.25rem 0.75rem;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        margin-left: auto;
+    }
+    
+    .select-all-btn:hover {
+        background: #5568d3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    <div class="form-container">
+        <div class="form-header">
+            <h2>{% if mode == 'create' %}➕ Добавить новую пару{% else %}✏️ Редактировать пару{% endif %}</h2>
+            <p>Заполните все обязательные поля и выберите направления</p>
+        </div>
+        
+        <form method="POST" action="{% if mode == 'create' %}/admin/pairs/new{% else %}/admin/pairs/{{ pair.id }}/edit{% endif %}" data-loading="{% if mode == 'create' %}Создание пары...{% else %}Сохранение изменений...{% endif %}">
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label for="subject_name">Название предмета <span class="required">*</span></label>
+                    <input 
+                        type="text" 
+                        id="subject_name" 
+                        name="subject_name" 
+                        value="{% if pair %}{{ pair.subject_name }}{% endif %}"
+                        required
+                        placeholder="Начните вводить название..."
+                        autocomplete="off"
+                    >
+                    <div id="subject_autocomplete" class="autocomplete-list"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="teacher_name">Преподаватель (ФИО) <span class="required">*</span></label>
+                    <input 
+                        type="text" 
+                        id="teacher_name" 
+                        name="teacher_name" 
+                        value="{% if pair %}{{ pair.teacher_name }}{% endif %}"
+                        required
+                        placeholder="Начните вводить ФИО..."
+                        autocomplete="off"
+                    >
+                    <div id="teacher_autocomplete" class="autocomplete-list"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="room">Аудитория <span class="required">*</span></label>
+                    <input 
+                        type="text" 
+                        id="room" 
+                        name="room" 
+                        value="{% if pair %}{{ pair.room }}{% endif %}"
+                        required
+                        placeholder="Например: 301 или онлайн"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="pair_type">Тип занятия <span class="required">*</span></label>
+                    <select id="pair_type" name="pair_type" required>
+                        {% for type in pair_types %}
+                        <option value="{{ type }}" {% if pair and pair.pair_type == type %}selected{% endif %}>
+                            {{ type }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="day_of_week">День недели <span class="required">*</span></label>
+                    <select id="day_of_week" name="day_of_week" required>
+                        {% for i in range(7) %}
+                        <option value="{{ i }}" {% if pair and pair.day_of_week == i %}selected{% endif %}>
+                            {{ weekday_names[i] }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="time_slot_id">Время пары <span class="required">*</span></label>
+                    <select id="time_slot_id" name="time_slot_id" required>
+                        {% for slot in time_slots %}
+                        <option value="{{ slot.id }}" {% if pair and pair.time_slot_id == slot.id %}selected{% endif %}>
+                            Пара {{ slot.slot_number }} ({{ slot.start_time }} - {{ slot.end_time }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label for="extra_link">Дополнительная ссылка (необязательно)</label>
+                    <input 
+                        type="url" 
+                        id="extra_link" 
+                        name="extra_link" 
+                        value="{% if pair and pair.extra_link %}{{ pair.extra_link }}{% endif %}"
+                        placeholder="https://zoom.us/j/... или ссылка на материалы"
+                    >
+                    <span class="helper-text">Ссылка на Zoom, Google Meet или материалы к паре</span>
+                </div>
+            </div>
+            
+            <div class="directions-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3>📚 Направления <span class="required">*</span></h3>
+                    <button type="button" class="select-all-btn" onclick="selectAllDirections()">Выбрать все</button>
+                </div>
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
+                    Выберите одно или несколько направлений, для которых будет доступна эта пара
+                </p>
+                
+                <div class="directions-by-course">
+                    {% for course in directions_by_course.keys()|sort %}
+                    <div class="course-group">
+                        <h4>{{ course }} курс</h4>
+                        <div class="checkbox-group">
+                            {% for direction in directions_by_course[course] %}
+                            <div class="checkbox-item">
+                                <input 
+                                    type="checkbox" 
+                                    id="dir_{{ direction.id }}" 
+                                    name="direction_ids" 
+                                    value="{{ direction.id }}"
+                                    {% if direction.id in selected_directions %}checked{% endif %}
+                                >
+                                <label for="dir_{{ direction.id }}">{{ direction.name }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <a href="/admin/pairs" class="btn btn-secondary">Отмена</a>
+                <button type="submit" class="btn btn-primary">
+                    {% if mode == 'create' %}✅ Создать пару{% else %}💾 Сохранить изменения{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Autocomplete functionality
+let subjectsData = [];
+let teachersData = [];
+
+async function loadAutocompleteData() {
+    try {
+        const [subjectsRes, teachersRes] = await Promise.all([
+            fetch('/admin/pairs/api/subjects'),
+            fetch('/admin/pairs/api/teachers')
+        ]);
+        subjectsData = await subjectsRes.json();
+        teachersData = await teachersRes.json();
+    } catch (error) {
+        console.error('Failed to load autocomplete data:', error);
+    }
+}
+
+function setupAutocomplete(inputId, listId, data) {
+    const input = document.getElementById(inputId);
+    const list = document.getElementById(listId);
+    let selectedIndex = -1;
+    
+    input.addEventListener('input', function() {
+        const value = this.value.toLowerCase();
+        list.innerHTML = '';
+        selectedIndex = -1;
+        
+        if (value.length < 1) {
+            list.classList.remove('show');
+            return;
+        }
+        
+        const filtered = data.filter(item => 
+            item.toLowerCase().includes(value)
+        ).slice(0, 10);
+        
+        if (filtered.length === 0) {
+            list.classList.remove('show');
+            return;
+        }
+        
+        filtered.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'autocomplete-item';
+            div.textContent = item;
+            div.addEventListener('click', function() {
+                input.value = item;
+                list.classList.remove('show');
+            });
+            list.appendChild(div);
+        });
+        
+        list.classList.add('show');
+    });
+    
+    input.addEventListener('keydown', function(e) {
+        const items = list.querySelectorAll('.autocomplete-item');
+        if (!items.length) return;
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+            updateSelection(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = Math.max(selectedIndex - 1, 0);
+            updateSelection(items);
+        } else if (e.key === 'Enter' && selectedIndex >= 0) {
+            e.preventDefault();
+            input.value = items[selectedIndex].textContent;
+            list.classList.remove('show');
+        } else if (e.key === 'Escape') {
+            list.classList.remove('show');
+        }
+    });
+    
+    function updateSelection(items) {
+        items.forEach((item, i) => {
+            item.classList.toggle('selected', i === selectedIndex);
+        });
+    }
+    
+    // Hide list when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !list.contains(e.target)) {
+            list.classList.remove('show');
+        }
+    });
+}
+
+// Initialize autocomplete
+loadAutocompleteData().then(() => {
+    setupAutocomplete('subject_name', 'subject_autocomplete', subjectsData);
+    setupAutocomplete('teacher_name', 'teacher_autocomplete', teachersData);
+});
+
+function selectAllDirections() {
+    const checkboxes = document.querySelectorAll('input[name="direction_ids"]');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    checkboxes.forEach(cb => cb.checked = !allChecked);
+}
+
+// Validate at least one direction is selected
+document.querySelector('form').addEventListener('submit', function(e) {
+    const checkboxes = document.querySelectorAll('input[name="direction_ids"]:checked');
+    if (checkboxes.length === 0) {
+        e.preventDefault();
+        alert('❌ Выберите хотя бы одно направление!');
+        return false;
+    }
+});
+</script>
+{% endblock %}

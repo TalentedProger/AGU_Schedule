@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Направления - AGU ScheduleBot Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .page-header h1 {
+        color: white;
+        font-size: 2rem;
+        margin: 0;
+    }
+    
+    .add-btn {
+        background: #10b981;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: background 0.3s;
+    }
+    
+    .add-btn:hover {
+        background: #059669;
+    }
+    
+    .filters-panel {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .filter-group {
+        display: flex;
+        gap: 1rem;
+        align-items: end;
+    }
+    
+    .filter-field {
+        flex: 1;
+        max-width: 300px;
+    }
+    
+    .filter-field label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #666;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .filter-field select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 6px;
+        font-size: 1rem;
+    }
+    
+    .filter-btn {
+        padding: 0.5rem 1.5rem;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+    }
+    
+    .clear-btn {
+        padding: 0.5rem 1rem;
+        background: #6b7280;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    
+    .content-panel {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    thead {
+        background: #f9fafb;
+    }
+    
+    th {
+        padding: 0.75rem;
+        text-align: left;
+        font-weight: 600;
+        color: #666;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    tbody tr:hover {
+        background: #f9fafb;
+    }
+    
+    .course-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .user-count {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        background: #f3f4f6;
+        color: #666;
+    }
+    
+    .action-btn {
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-right: 0.5rem;
+    }
+    
+    .edit-btn {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .delete-btn {
+        background: #ef4444;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .delete-btn:disabled {
+        background: #d1d5db;
+        cursor: not-allowed;
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: 3rem;
+        color: #999;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📚 Направления</h1>
+    <a href="/admin/directions/new" class="add-btn">+ Добавить направление</a>
+</div>
+
+<div class="filters-panel">
+    <form method="GET" action="/admin/directions">
+        <div class="filter-group">
+            <div class="filter-field">
+                <label for="course">Фильтр по курсу</label>
+                <select name="course" id="course">
+                    <option value="">Все курсы</option>
+                    <option value="1" {% if filter_course == 1 %}selected{% endif %}>1 курс</option>
+                    <option value="2" {% if filter_course == 2 %}selected{% endif %}>2 курс</option>
+                    <option value="3" {% if filter_course == 3 %}selected{% endif %}>3 курс</option>
+                    <option value="4" {% if filter_course == 4 %}selected{% endif %}>4 курс</option>
+                </select>
+            </div>
+            <button type="submit" class="filter-btn">Применить</button>
+            <a href="/admin/directions" class="clear-btn">Сбросить</a>
+        </div>
+    </form>
+</div>
+
+<div class="content-panel">
+    <h2 style="margin-bottom: 1.5rem; color: #333;">📋 Список направлений ({{ directions|length }})</h2>
+    
+    {% if directions %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Название</th>
+                <th>Курс</th>
+                <th>Студентов</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for direction in directions %}
+            <tr>
+                <td>{{ direction.id }}</td>
+                <td><strong>{{ direction.name }}</strong></td>
+                <td><span class="course-badge">{{ direction.course }} курс</span></td>
+                <td><span class="user-count">{{ direction.user_count }} чел.</span></td>
+                <td style="white-space: nowrap;">
+                    <a href="/admin/directions/{{ direction.id }}/edit" class="action-btn edit-btn">✏️ Изменить</a>
+                    <form method="POST" action="/admin/directions/{{ direction.id }}/delete" style="display: inline;"
+                          onsubmit="return confirm('Удалить направление {{ direction.name }}?{% if direction.user_count > 0 %}\n\n⚠️ Внимание: У этого направления есть {{ direction.user_count }} студентов!{% endif %}');">
+                        <button type="submit" class="action-btn delete-btn" {% if direction.user_count > 0 %}disabled title="Нельзя удалить - есть студенты"{% endif %}>
+                            🗑️ Удалить
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="no-data">
+        📭 Направления не найдены
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

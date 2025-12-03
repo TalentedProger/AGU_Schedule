@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Дашборд - AGU ScheduleBot Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-icon {
+        font-size: 2rem;
+    }
+    
+    .stat-label {
+        color: #666;
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #333;
+    }
+    
+    .table-container {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow-x: auto;
+    }
+    
+    .table-header {
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .table-header h2 {
+        font-size: 1.5rem;
+        color: #333;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    thead {
+        background: #f9fafb;
+    }
+    
+    th {
+        padding: 0.75rem;
+        text-align: left;
+        font-weight: 600;
+        color: #666;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    tbody tr:hover {
+        background: #f9fafb;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .status-success {
+        background: #d1fae5;
+        color: #059669;
+    }
+    
+    .status-error {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: 2rem;
+        color: #999;
+        font-style: italic;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 style="color: white; margin-bottom: 2rem; font-size: 2rem;">📊 Статистика</h1>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-header">
+            <div>
+                <div class="stat-label">Активных пользователей</div>
+                <div class="stat-value">{{ stats.total_users }}</div>
+            </div>
+            <div class="stat-icon">👥</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <div>
+                <div class="stat-label">Всего пар</div>
+                <div class="stat-value">{{ stats.total_pairs }}</div>
+            </div>
+            <div class="stat-icon">📚</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <div>
+                <div class="stat-label">Сообщений сегодня</div>
+                <div class="stat-value">{{ stats.messages_today }}</div>
+            </div>
+            <div class="stat-icon">📨</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <div>
+                <div class="stat-label">Процент ошибок</div>
+                <div class="stat-value">{{ stats.error_rate }}</div>
+            </div>
+            <div class="stat-icon">⚠️</div>
+        </div>
+    </div>
+</div>
+
+<div class="table-container">
+    <div class="table-header">
+        <h2>📋 Последние доставки (50)</h2>
+    </div>
+    
+    {% if delivery_logs %}
+    <table>
+        <thead>
+            <tr>
+                <th>Время</th>
+                <th>Тип</th>
+                <th>Пользователь</th>
+                <th>Статус</th>
+                <th>Ошибка</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in delivery_logs %}
+            <tr>
+                <td>{{ log.delivery_time }}</td>
+                <td><strong>{{ log.message_type }}</strong></td>
+                <td>@{{ log.username }}</td>
+                <td>
+                    {% if log.success %}
+                    <span class="status-badge status-success">✓ Успешно</span>
+                    {% else %}
+                    <span class="status-badge status-error">✗ Ошибка</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if log.error_message %}
+                    <code style="color: #dc2626; font-size: 0.85rem;">{{ log.error_message }}</code>
+                    {% else %}
+                    —
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="no-data">
+        Нет данных о доставках
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

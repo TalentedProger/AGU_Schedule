@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block title %}Управление расписанием - AGU ScheduleBot Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filters-panel {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .filters-panel h3 {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+        color: #333;
+    }
+    
+    .filter-group {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: end;
+    }
+    
+    .filter-field {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .filter-field label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #666;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .filter-field select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 6px;
+        font-size: 1rem;
+    }
+    
+    .filter-btn {
+        padding: 0.5rem 1.5rem;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background 0.3s;
+    }
+    
+    .filter-btn:hover {
+        background: #5568d3;
+    }
+    
+    .clear-btn {
+        padding: 0.5rem 1rem;
+        background: #6b7280;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+    }
+    
+    .clear-btn:hover {
+        background: #4b5563;
+    }
+    
+    .add-pair-btn {
+        background: #10b981;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-block;
+        transition: background 0.3s;
+    }
+    
+    .add-pair-btn:hover {
+        background: #059669;
+    }
+    
+    .pairs-table {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow-x: auto;
+    }
+    
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .table-header h2 {
+        font-size: 1.5rem;
+        color: #333;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    thead {
+        background: #f9fafb;
+    }
+    
+    th {
+        padding: 0.75rem;
+        text-align: left;
+        font-weight: 600;
+        color: #666;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    tbody tr:hover {
+        background: #f9fafb;
+    }
+    
+    .day-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .type-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .type-lecture {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .type-seminar {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .type-lab {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .type-practice {
+        background: #fce7f3;
+        color: #9f1239;
+    }
+    
+    .action-btn {
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-right: 0.5rem;
+        transition: opacity 0.3s;
+    }
+    
+    .action-btn:hover {
+        opacity: 0.8;
+    }
+    
+    .edit-btn {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .delete-btn {
+        background: #ef4444;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+    }
+    
+    .page-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid #e5e7eb;
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        color: #666;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+    
+    .page-btn:hover {
+        background: #f9fafb;
+        border-color: #667eea;
+    }
+    
+    .page-btn.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: 3rem;
+        color: #999;
+        font-style: italic;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 style="color: white; margin-bottom: 2rem; font-size: 2rem;">📚 Управление расписанием</h1>
+
+<!-- Filters Panel -->
+<div class="filters-panel">
+    <h3>🔍 Фильтры</h3>
+    <form method="GET" action="/admin/pairs">
+        <div class="filter-group">
+            <div class="filter-field">
+                <label for="direction_id">Направление</label>
+                <select name="direction_id" id="direction_id">
+                    <option value="">Все направления</option>
+                    {% for direction in directions %}
+                    <option value="{{ direction['id'] }}" {% if filters.direction_id == direction['id'] %}selected{% endif %}>
+                        {{ direction['course'] }} курс - {{ direction['name'] }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-field">
+                <label for="weekday">День недели</label>
+                <select name="weekday" id="weekday">
+                    <option value="">Все дни</option>
+                    {% for i in range(7) %}
+                    <option value="{{ i }}" {% if filters.weekday == i %}selected{% endif %}>
+                        {{ weekday_names[i] }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <button type="submit" class="filter-btn">Применить</button>
+            <a href="/admin/pairs" class="clear-btn">Сбросить</a>
+        </div>
+    </form>
+</div>
+
+<!-- Pairs Table -->
+<div class="pairs-table">
+    <div class="table-header">
+        <h2>📋 Список пар ({{ pairs|length }})</h2>
+        <a href="/admin/pairs/new" class="add-pair-btn">+ Добавить пару</a>
+    </div>
+    
+    {% if pairs %}
+    <table>
+        <thead>
+            <tr>
+                <th>День</th>
+                <th>Время</th>
+                <th>Предмет</th>
+                <th>Преподаватель</th>
+                <th>Аудитория</th>
+                <th>Тип</th>
+                <th>Направления</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pair in pairs %}
+            <tr>
+                <td>
+                    <span class="day-badge">{{ weekday_names[pair.day_of_week] }}</span>
+                </td>
+                <td><strong>{{ pair.start_time }} - {{ pair.end_time }}</strong></td>
+                <td><strong>{{ pair.subject_name }}</strong></td>
+                <td>{{ pair.teacher_name }}</td>
+                <td>{{ pair.room }}</td>
+                <td>
+                    <span class="type-badge type-{{ pair.pair_type.lower() }}">
+                        {{ pair.pair_type }}
+                    </span>
+                </td>
+                <td style="font-size: 0.85rem;">{{ pair.directions }}</td>
+                <td style="white-space: nowrap;">
+                    <a href="/admin/pairs/{{ pair.id }}/edit" class="action-btn edit-btn">✏️ Изменить</a>
+                    <form method="POST" action="/admin/pairs/{{ pair.id }}/delete" style="display: inline;" 
+                          onsubmit="return confirm('Удалить эту пару?');">
+                        <button type="submit" class="action-btn delete-btn">🗑️ Удалить</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="pagination">
+        {% if current_page > 1 %}
+        <a href="?page={{ current_page - 1 }}{% if filters.direction_id %}&direction_id={{ filters.direction_id }}{% endif %}{% if filters.weekday %}&weekday={{ filters.weekday }}{% endif %}" 
+           class="page-btn">← Назад</a>
+        {% endif %}
+        
+        {% for page_num in range(1, total_pages + 1) %}
+        <a href="?page={{ page_num }}{% if filters.direction_id %}&direction_id={{ filters.direction_id }}{% endif %}{% if filters.weekday %}&weekday={{ filters.weekday }}{% endif %}" 
+           class="page-btn {% if page_num == current_page %}active{% endif %}">{{ page_num }}</a>
+        {% endfor %}
+        
+        {% if current_page < total_pages %}
+        <a href="?page={{ current_page + 1 }}{% if filters.direction_id %}&direction_id={{ filters.direction_id }}{% endif %}{% if filters.weekday %}&weekday={{ filters.weekday }}{% endif %}" 
+           class="page-btn">Вперёд →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div class="no-data">
+        📭 Пары не найдены. Добавьте первую пару!
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

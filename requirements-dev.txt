@@ -1,0 +1,18 @@
+# ===============================================
+# ScheduleBot Development Dependencies
+# ===============================================
+
+# Include production dependencies
+-r requirements.txt
+
+# === Testing ===
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+
+# === Code Quality ===
+black>=24.0.0
+flake8>=7.0.0
+mypy>=1.8.0
+
+# === Development Tools ===
+ipython>=8.20.0
