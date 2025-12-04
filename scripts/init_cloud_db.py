@@ -17,8 +17,25 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.db import init_database, get_connection, is_postgres, release_connection
-from app.db.connection_cloud import convert_query
 from app.utils.logger import logger
+
+
+def convert_query_local(query: str) -> str:
+    """
+    Convert SQLite query syntax to PostgreSQL.
+    Local copy to avoid circular import issues.
+    """
+    result = []
+    param_count = 0
+    i = 0
+    while i < len(query):
+        if query[i] == '?':
+            param_count += 1
+            result.append(f'${param_count}')
+        else:
+            result.append(query[i])
+        i += 1
+    return ''.join(result)
 
 
 async def seed_directions():
@@ -71,7 +88,7 @@ async def seed_directions():
         for course, name in directions:
             query = "INSERT INTO directions (course, name) VALUES (?, ?)"
             if is_postgres():
-                query = convert_query(query)
+                query = convert_query_local(query)
             await conn.execute(query, (course, name))
         
         await conn.commit()
