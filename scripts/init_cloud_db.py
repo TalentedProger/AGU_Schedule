@@ -16,7 +16,8 @@ import os
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.db import init_database, get_connection, is_postgres
+from app.db import init_database, get_connection, is_postgres, release_connection
+from app.db.connection_cloud import convert_query
 from app.utils.logger import logger
 
 
@@ -68,10 +69,10 @@ async def seed_directions():
         ]
         
         for course, name in directions:
-            await conn.execute(
-                "INSERT INTO directions (course, name) VALUES (?, ?)",
-                (course, name)
-            )
+            query = "INSERT INTO directions (course, name) VALUES (?, ?)"
+            if is_postgres():
+                query = convert_query(query)
+            await conn.execute(query, (course, name))
         
         await conn.commit()
         logger.info(f"✓ Seeded {len(directions)} directions")
@@ -80,7 +81,7 @@ async def seed_directions():
         logger.error(f"Failed to seed directions: {e}")
         raise
     finally:
-        await conn.close()
+        await release_connection(conn)
 
 
 async def main():

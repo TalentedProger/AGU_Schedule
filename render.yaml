@@ -7,7 +7,7 @@ services:
     name: agu-schedulebot
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python -m app.main combined
+    startCommand: python scripts/init_cloud_db.py && python -m app.main combined
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
