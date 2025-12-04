@@ -4,7 +4,9 @@ Telegram-бот для доставки расписания студентам 
 
 ## 🚀 Быстрый старт
 
-См. [STARTUP.md](STARTUP.md) для полной инструкции по запуску.
+См. [STARTUP.md](STARTUP.md) для полной инструкции по запуску (локально и в облаке).
+
+### Локальный запуск (разработка)
 
 ```bash
 # 1. Запустить бота (терминал 1)
@@ -15,6 +17,27 @@ Telegram-бот для доставки расписания студентам 
 
 # 3. Открыть http://127.0.0.1:8000/admin/login
 ```
+
+### Облачный деплой (Railway / Render)
+
+```bash
+# 1. Push на GitHub
+git push origin main
+
+# 2. Подключить репозиторий в Railway/Render
+
+# 3. Добавить PostgreSQL базу данных
+
+# 4. Установить переменные окружения:
+#    - BOT_TOKEN
+#    - ADMIN_TG_ID
+#    - ADMIN_PASSWORD
+#    - SECRET_KEY
+```
+
+Бот + админ-панель автоматически задеплоятся и будут работать 24/7.
+
+> ⚠️ **Vercel НЕ подходит** для этого проекта (serverless не поддерживает polling и scheduler)
 
 ## Возможности
 
@@ -35,15 +58,26 @@ Telegram-бот для доставки расписания студентам 
 
 ## Технологический стек
 
-- **Python:** 3.11+
-- **Telegram Bot:** aiogram 3.x
-- **Web Framework:** FastAPI
-- **Database:** SQLite + aiosqlite
-- **Scheduler:** APScheduler
-- **Server:** Uvicorn
-- **Templates:** Jinja2
+| Компонент | Технология | Описание |
+|-----------|------------|----------|
+| **Backend** | Python 3.11+ | Основной язык |
+| **Telegram** | aiogram 3.x | Async bot framework |
+| **Web** | FastAPI | Admin panel API |
+| **DB (local)** | SQLite + aiosqlite | Локальная разработка |
+| **DB (cloud)** | PostgreSQL + asyncpg | Облачный деплой |
+| **Scheduler** | APScheduler | Cron jobs |
+| **Server** | Uvicorn | ASGI server |
+| **Templates** | Jinja2 | HTML рендеринг |
 
 Полная документация: [Docs/TechStack.md](Docs/TechStack.md)
+
+## Режимы запуска
+
+| Режим | Команда | Описание |
+|-------|---------|----------|
+| `bot` | `python -m app.main` | Только бот + scheduler |
+| `admin` | `python -m app.main admin` | Только веб-панель |
+| `combined` | `python -m app.main combined` | Бот + панель вместе (для облака) |
 
 ## Установка и настройка
 
@@ -109,6 +143,24 @@ python -m app.main admin
 
 Админ-панель: http://127.0.0.1:8000/admin/login
 
+## Облачный деплой
+
+### Railway (рекомендуется)
+
+1. Создайте проект на [railway.app](https://railway.app)
+2. Подключите GitHub репозиторий
+3. Добавьте PostgreSQL: New → Database → PostgreSQL
+4. Установите переменные окружения (BOT_TOKEN, ADMIN_TG_ID, ADMIN_PASSWORD, SECRET_KEY)
+5. Деплой автоматический при push в main
+
+### Render
+
+1. Создайте проект на [render.com](https://render.com)
+2. New → Blueprint → Выберите репозиторий
+3. Render автоматически найдёт `render.yaml`
+4. Установите переменные окружения
+5. Готово!
+
 ## Резервное копирование
 
 ```bash
@@ -128,27 +180,32 @@ python scripts/backup_db.py restore backups/schedule_backup_YYYYMMDD_HHMMSS.db
 AGU_Schedule/
 ├── app/                    # Основное приложение
 │   ├── bot/               # Telegram bot логика
-│   ├── web/               # Admin panel (FastAPI)
+│   ├── admin/             # Admin panel routes
 │   ├── scheduler/         # APScheduler jobs
 │   ├── db/                # Database models & queries
 │   └── utils/             # Shared utilities
 ├── Docs/                  # Документация
-├── data/                  # SQLite database
+├── templates/             # HTML templates
+├── data/                  # SQLite database (local)
 ├── logs/                  # Логи приложения
-└── tests/                 # Тесты
+├── scripts/               # Utility scripts
+├── railway.toml           # Railway config
+├── render.yaml            # Render config
+├── Procfile               # Process file
+└── requirements.txt       # Dependencies
 ```
 
 Полная документация структуры: [Docs/project_structure.md](Docs/project_structure.md)
 
 ## Документация
 
+- **[STARTUP.md](STARTUP.md)** - Инструкция по запуску
 - **[PRD.md](Docs/PRD.md)** - Требования к продукту
 - **[AppMap.md](Docs/AppMap.md)** - Архитектура приложения
 - **[TechStack.md](Docs/TechStack.md)** - Технический стек
 - **[Implementation.md](Docs/Implementation.md)** - План реализации
-- **[project_structure.md](Docs/project_structure.md)** - Структура проекта
+- **[DEPLOYMENT.md](Docs/DEPLOYMENT.md)** - VPS деплой
 - **[UI_UX_doc.md](Docs/UI_UX_doc.md)** - Дизайн-система
-- **[Bug_tracking.md](Docs/Bug_tracking.md)** - Отслеживание ошибок
 
 ## Разработка
 
@@ -162,12 +219,6 @@ pip install -r requirements-dev.txt
 
 ```bash
 pytest
-```
-
-### Форматирование кода
-
-```bash
-black app/
 ```
 
 ## Лицензия

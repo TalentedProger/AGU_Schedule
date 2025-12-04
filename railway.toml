@@ -1,0 +1,23 @@
+# ===============================================
+# Railway Deployment Configuration
+# AGU ScheduleBot - Bot + Admin Panel
+# ===============================================
+
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+# Start command: run database init then start combined service
+startCommand = "python scripts/init_cloud_db.py && python -m app.main combined"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+
+# Environment variables are configured in Railway Dashboard:
+# - BOT_TOKEN (from @BotFather)
+# - ADMIN_TG_ID (your Telegram ID)
+# - ADMIN_PASSWORD (secure password)
+# - SECRET_KEY (generate with: python -c "import secrets; print(secrets.token_hex(32))")
+# - DATABASE_URL (auto-set when you add PostgreSQL)
+

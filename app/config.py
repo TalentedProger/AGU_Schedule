@@ -2,8 +2,11 @@
 Application configuration using Pydantic Settings.
 
 Loads environment variables from .env file and provides type-safe access.
+Supports both local development and cloud deployment (Railway, Render).
 """
 
+import os
+from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,7 +18,9 @@ class Settings(BaseSettings):
     ADMIN_TG_ID: int
     
     # === Database ===
+    # SQLite for local, PostgreSQL URL for cloud (auto-detected)
     DATABASE_PATH: str = "data/schedule.db"
+    DATABASE_URL: Optional[str] = None  # Set by Railway/Render
     
     # === Admin Panel ===
     ADMIN_USERNAME: str = "admin"
@@ -43,14 +48,31 @@ class Settings(BaseSettings):
     WEB_HOST: str = "127.0.0.1"
     WEB_PORT: int = 8000
     
+    # === Cloud Deployment ===
+    # These are auto-set by cloud platforms
+    PORT: Optional[int] = None  # Railway/Render set this
+    RAILWAY_ENVIRONMENT: Optional[str] = None
+    RENDER: Optional[str] = None
+    
     # === Development ===
     DEBUG: bool = False
     
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        case_sensitive=True
+        case_sensitive=True,
+        extra="ignore"  # Ignore extra env vars from cloud platforms
     )
+    
+    @property
+    def is_cloud(self) -> bool:
+        """Check if running in cloud environment."""
+        return bool(self.DATABASE_URL or self.RAILWAY_ENVIRONMENT or self.RENDER)
+    
+    @property
+    def effective_port(self) -> int:
+        """Get the effective port to use."""
+        return self.PORT or self.ADMIN_PORT
 
 
 # Global settings instance
