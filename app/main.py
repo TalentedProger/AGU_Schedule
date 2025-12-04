@@ -88,6 +88,26 @@ async def start_admin_panel():
     app = FastAPI(title="AGU ScheduleBot Admin")
     templates = Jinja2Templates(directory='templates/errors')
     
+    # Add middleware for handling OPTIONS requests (CORS preflight)
+    @app.middleware("http")
+    async def catch_all_middleware(request: Request, call_next):
+        # Handle OPTIONS requests for CORS preflight
+        if request.method == "OPTIONS":
+            return Response(status_code=200, headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Headers": "*",
+            })
+        
+        try:
+            response = await call_next(request)
+            return response
+        except Exception as e:
+            # Log the error but don't crash the server
+            if "405" not in str(e):  # Don't spam 405 errors
+                logger.error(f"Request error on {request.method} {request.url.path}: {e}")
+            raise
+    
     # Mount static files
     static_path = os.path.join(os.path.dirname(__file__), "web", "static")
     if os.path.exists(static_path):
@@ -197,6 +217,26 @@ async def start_combined():
     # Create FastAPI app
     app = FastAPI(title="AGU ScheduleBot Admin")
     templates = Jinja2Templates(directory='templates/errors')
+    
+    # Add middleware for handling OPTIONS requests (CORS preflight)
+    @app.middleware("http")
+    async def catch_all_middleware(request: Request, call_next):
+        # Handle OPTIONS requests for CORS preflight
+        if request.method == "OPTIONS":
+            return Response(status_code=200, headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Headers": "*",
+            })
+        
+        try:
+            response = await call_next(request)
+            return response
+        except Exception as e:
+            # Log the error but don't crash the server
+            if "405" not in str(e):  # Don't spam 405 errors
+                logger.error(f"Request error on {request.method} {request.url.path}: {e}")
+            raise
     
     # Mount static files
     static_path = os.path.join(os.path.dirname(__file__), "web", "static")
