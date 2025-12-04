@@ -101,6 +101,43 @@ async def seed_directions():
         await release_connection(conn)
 
 
+async def check_if_initialized() -> bool:
+    """
+    Check if database is already initialized by checking for existing data.
+    Returns True if database has data, False otherwise.
+    """
+    try:
+        conn = await get_connection()
+        try:
+            # Check if users table has data
+            if is_postgres():
+                cursor = await conn.execute("SELECT COUNT(*) as count FROM users")
+                row = await cursor.fetchone()
+                user_count = row['count'] if row else 0
+            else:
+                async with conn.execute("SELECT COUNT(*) as count FROM users") as cursor:
+                    row = await cursor.fetchone()
+                    user_count = row['count'] if row else 0
+            
+            # Check if pairs table has data
+            if is_postgres():
+                cursor = await conn.execute("SELECT COUNT(*) as count FROM pairs")
+                row = await cursor.fetchone()
+                pair_count = row['count'] if row else 0
+            else:
+                async with conn.execute("SELECT COUNT(*) as count FROM pairs") as cursor:
+                    row = await cursor.fetchone()
+                    pair_count = row['count'] if row else 0
+            
+            return user_count > 0 or pair_count > 0
+        finally:
+            await release_connection(conn)
+    except Exception as e:
+        # If tables don't exist, that's fine - we'll create them
+        logger.debug(f"Could not check initialization status: {e}")
+        return False
+
+
 async def main():
     """Initialize database for cloud deployment."""
     print("=" * 50)
@@ -112,6 +149,19 @@ async def main():
         print("📦 Database: PostgreSQL (cloud)")
     else:
         print("📦 Database: SQLite (local)")
+    
+    # ВАЖНО: Проверяем существуют ли уже данные
+    print("\n🔍 Checking if database is already initialized...")
+    has_data = await check_if_initialized()
+    
+    if has_data:
+        print("✅ Database already has data - SKIPPING initialization")
+        print("   This preserves existing users and pairs!")
+        print("\n⚠️  If you need to reinitialize, manually clear the database first")
+        print("\n" + "=" * 50)
+        print("✅ Database check complete - existing data preserved!")
+        print("=" * 50)
+        return
     
     print("\n1. Initializing database schema...")
     await init_database()

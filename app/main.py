@@ -88,16 +88,20 @@ async def start_admin_panel():
     app = FastAPI(title="AGU ScheduleBot Admin")
     templates = Jinja2Templates(directory='templates/errors')
     
-    # Add middleware for handling OPTIONS requests (CORS preflight)
+    # Add middleware for handling OPTIONS and HEAD requests
     @app.middleware("http")
     async def catch_all_middleware(request: Request, call_next):
         # Handle OPTIONS requests for CORS preflight
         if request.method == "OPTIONS":
             return Response(status_code=200, headers={
                 "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, HEAD",
                 "Access-Control-Allow-Headers": "*",
             })
+        
+        # Handle HEAD requests gracefully (for health checks)
+        if request.method == "HEAD":
+            return Response(status_code=200)
         
         try:
             response = await call_next(request)
@@ -218,16 +222,20 @@ async def start_combined():
     app = FastAPI(title="AGU ScheduleBot Admin")
     templates = Jinja2Templates(directory='templates/errors')
     
-    # Add middleware for handling OPTIONS requests (CORS preflight)
+    # Add middleware for handling OPTIONS and HEAD requests
     @app.middleware("http")
     async def catch_all_middleware(request: Request, call_next):
         # Handle OPTIONS requests for CORS preflight
         if request.method == "OPTIONS":
             return Response(status_code=200, headers={
                 "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, HEAD",
                 "Access-Control-Allow-Headers": "*",
             })
+        
+        # Handle HEAD requests gracefully (for health checks)
+        if request.method == "HEAD":
+            return Response(status_code=200)
         
         try:
             response = await call_next(request)
@@ -282,7 +290,9 @@ async def start_combined():
         return RedirectResponse(url='/admin/login', status_code=302)
     
     # Health check endpoint for cloud platforms
+    # Supports both GET and HEAD requests
     @app.get("/health")
+    @app.head("/health")
     async def health_check():
         return {"status": "healthy", "mode": "combined"}
     
