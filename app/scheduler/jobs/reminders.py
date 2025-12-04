@@ -42,9 +42,11 @@ async def reminder_job(bot: Bot, slot_number: int, start_time: str, end_time: st
         
         # Get current day of week (0=Monday)
         today = datetime.now().weekday()
+        logger.info(f"Today is weekday {today} (0=Monday)")
         
         successful = 0
         errors = 0
+        skipped = 0
         
         # Send to each user
         for user in users:
@@ -54,18 +56,35 @@ async def reminder_job(bot: Bot, slot_number: int, start_time: str, end_time: st
                     conn, user.direction_id, today
                 )
                 
+                logger.debug(
+                    f"User {user.tg_id} (direction {user.direction_id}): "
+                    f"found {len(pairs)} pairs for today"
+                )
+                
                 # Find pair matching this time slot
                 matching_pair = None
                 for pair, pair_start, pair_end in pairs:
+                    logger.debug(
+                        f"Checking pair: {pair.title} at {pair_start} "
+                        f"(looking for {start_time})"
+                    )
                     if pair_start == start_time:
                         matching_pair = (pair, pair_start, pair_end)
                         break
                 
                 if not matching_pair:
                     # User doesn't have class at this slot
+                    logger.debug(
+                        f"User {user.tg_id} has no class at {start_time}, skipping"
+                    )
+                    skipped += 1
                     continue
                 
                 pair, pair_start, pair_end = matching_pair
+                logger.info(
+                    f"Sending reminder to user {user.tg_id} for {pair.title} "
+                    f"at {pair_start}"
+                )
                 
                 # Format reminder message
                 message = format_reminder_message(pair, pair_start, pair_end)
@@ -77,12 +96,14 @@ async def reminder_job(bot: Bot, slot_number: int, start_time: str, end_time: st
                 if sent:
                     await log_delivery(conn, user.tg_id, 'reminder', 'sent')
                     successful += 1
+                    logger.info(f"Successfully sent reminder to user {user.tg_id}")
                 else:
                     await log_delivery(
                         conn, user.tg_id, 'reminder', 'error',
                         'Failed after retries'
                     )
                     errors += 1
+                    logger.error(f"Failed to send reminder to user {user.tg_id}")
             
             except Exception as e:
                 logger.error(f"Error sending reminder to user {user.tg_id}: {e}", exc_info=True)
@@ -93,7 +114,7 @@ async def reminder_job(bot: Bot, slot_number: int, start_time: str, end_time: st
         
         logger.info(
             f"Reminder job completed for slot {slot_number}: "
-            f"{successful} sent, {errors} errors"
+            f"{successful} sent, {errors} errors, {skipped} skipped (no class)"
         )
     
     except Exception as e:

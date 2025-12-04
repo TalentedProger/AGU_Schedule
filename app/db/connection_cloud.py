@@ -288,6 +288,21 @@ if is_postgres():
             name TEXT NOT NULL UNIQUE,
             created_at TIMESTAMP NOT NULL DEFAULT NOW()
         );
+        
+        -- Payments table (Telegram Stars donations)
+        CREATE TABLE IF NOT EXISTS payments (
+            id SERIAL PRIMARY KEY,
+            tg_id BIGINT NOT NULL,
+            amount INTEGER NOT NULL,
+            currency TEXT NOT NULL DEFAULT 'XTR',
+            payload TEXT,
+            status TEXT NOT NULL DEFAULT 'pending',
+            telegram_payment_id TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        );
+        CREATE INDEX IF NOT EXISTS idx_payments_tg_id ON payments(tg_id);
+        CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
+        CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(created_at);
         '''
         
         async with pool.acquire() as conn:

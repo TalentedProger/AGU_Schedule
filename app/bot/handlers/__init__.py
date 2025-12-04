@@ -2,7 +2,7 @@
 
 from aiogram import Dispatcher
 
-from . import start, registration, settings, common
+from . import start, registration, settings, support, common
 
 
 def register_handlers(dp: Dispatcher):
@@ -16,4 +16,5 @@ def register_handlers(dp: Dispatcher):
     dp.include_router(start.router)
     dp.include_router(registration.router)
     dp.include_router(settings.router)
+    dp.include_router(support.router)  # Support/payments handler
     dp.include_router(common.router)  # Must be last (catches all)

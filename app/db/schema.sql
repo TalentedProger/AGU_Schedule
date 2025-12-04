@@ -123,3 +123,21 @@ CREATE TABLE IF NOT EXISTS teachers (
 );
 
 CREATE INDEX IF NOT EXISTS idx_teachers_name ON teachers(name);
+
+
+-- === Payments Table ===
+-- Stores Telegram Stars donation transactions
+CREATE TABLE IF NOT EXISTS payments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tg_id INTEGER NOT NULL,                      -- Telegram user ID (donor)
+    amount INTEGER NOT NULL,                     -- Amount in Stars
+    currency TEXT NOT NULL DEFAULT 'XTR',        -- Currency code (XTR for Stars)
+    payload TEXT,                                -- Custom payload/reference
+    status TEXT NOT NULL DEFAULT 'pending',      -- Status: 'pending', 'completed', 'failed'
+    telegram_payment_id TEXT,                    -- Telegram's payment charge ID
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_payments_tg_id ON payments(tg_id);
+CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
+CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(created_at);
