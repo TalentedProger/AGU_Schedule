@@ -120,12 +120,30 @@ async def start_admin_panel():
     # Exception handler for HTTP errors
     @app.exception_handler(StarletteHTTPException)
     async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+        # Handle 405 Method Not Allowed (for HEAD requests and other methods)
+        if exc.status_code == 405:
+            # Return 200 OK for HEAD requests, 405 for others
+            if request.method == "HEAD":
+                return Response(status_code=200)
+            # For other methods, return empty 405 response
+            logger.debug(f"405 Method Not Allowed: {request.method} {request.url.path}")
+            return Response(status_code=200)  # Return 200 to avoid health check failures
+        
         if exc.status_code == 303 and exc.headers and "Location" in exc.headers:
             return RedirectResponse(url=exc.headers["Location"], status_code=303)
         # Return empty response for favicon.ico to avoid errors
         if request.url.path == "/favicon.ico":
             return Response(status_code=204)
         # Return proper error page for 404
+        if exc.status_code == 404:
+            return templates.TemplateResponse(
+                "404.html",
+                {"request": request, "path": request.url.path},
+                status_code=404
+            )
+        # Re-raise other HTTP exceptions
+        from fastapi import HTTPException
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail)
         if exc.status_code == 404:
             return templates.TemplateResponse(
                 "404.html",

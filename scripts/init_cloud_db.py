@@ -149,6 +149,14 @@ async def main():
         print("📦 Database: PostgreSQL (cloud)")
     else:
         print("📦 Database: SQLite (local)")
+        print("⚠️  WARNING: Using SQLite in production!")
+        print("⚠️  Set DATABASE_URL environment variable for PostgreSQL")
+        
+        # Check if DATABASE_URL is set but not detected
+        import os
+        if os.environ.get('DATABASE_URL'):
+            print(f"⚠️  DATABASE_URL found but not used: {os.environ.get('DATABASE_URL')[:30]}...")
+            print("⚠️  Check if asyncpg is installed: pip install asyncpg")
     
     # ВАЖНО: Проверяем существуют ли уже данные
     print("\n🔍 Checking if database is already initialized...")
