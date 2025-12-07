@@ -8,6 +8,8 @@ services:
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: python scripts/init_cloud_db.py && python -m app.main combined
+    repo: https://github.com/TalentedProger/AGU_Schedule  # Прямая ссылка на репозиторий
+    branch: main  # Ветка для отслеживания
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
@@ -24,7 +26,7 @@ services:
           name: agu-schedulebot-db
           property: connectionString
     healthCheckPath: /health
-    autoDeploy: true
+    autoDeploy: true  # Автодеплой при изменениях в main ветке
 
 databases:
   - name: agu-schedulebot-db

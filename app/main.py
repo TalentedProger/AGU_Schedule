@@ -8,6 +8,7 @@ Supports both local (polling) and cloud (webhook) modes.
 import asyncio
 import os
 import sys
+from datetime import datetime
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
@@ -28,11 +29,24 @@ async def main():
     """Main application entry point."""
     logger.info("Starting ScheduleBot...")
     
+    # Check for cloud deployment
+    if is_cloud_deployment():
+        logger.warning("⚠️  Cloud environment detected but running in polling mode!")
+        logger.warning("⚠️  This may cause conflicts with other bot instances")
+        logger.warning("⚠️  Use 'combined' mode for cloud deployment")
+    
     # Initialize bot
     bot = Bot(
         token=settings.BOT_TOKEN,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML)
     )
+    
+    # Clear webhook before starting polling to avoid conflicts
+    try:
+        await bot.delete_webhook(drop_pending_updates=True)
+        logger.info("✅ Webhook cleared, starting polling mode")
+    except Exception as e:
+        logger.warning(f"Could not clear webhook: {e}")
     
     # Initialize dispatcher with FSM storage
     dp = Dispatcher(storage=MemoryStorage())
@@ -224,6 +238,13 @@ async def start_combined():
         default=DefaultBotProperties(parse_mode=ParseMode.HTML)
     )
     
+    # Clear webhook and ensure clean start
+    try:
+        await bot.delete_webhook(drop_pending_updates=True)
+        logger.info("✅ Webhook cleared for polling mode")
+    except Exception as e:
+        logger.warning(f"Could not clear webhook: {e}")
+    
     # Initialize dispatcher with FSM storage
     dp = Dispatcher(storage=MemoryStorage())
     
@@ -312,7 +333,33 @@ async def start_combined():
     @app.get("/health")
     @app.head("/health")
     async def health_check():
-        return {"status": "healthy", "mode": "combined"}
+        try:
+            # Basic health indicators
+            health_status = {
+                "status": "healthy",
+                "mode": "combined",
+                "timestamp": datetime.now().isoformat(),
+                "services": {
+                    "web": "running",
+                    "bot": "polling",
+                    "scheduler": scheduler.running if 'scheduler' in locals() else False
+                }
+            }
+            
+            # Test database connection
+            try:
+                from app.db import get_connection
+                conn = await get_connection()
+                await conn.execute("SELECT 1")
+                await conn.close()
+                health_status["services"]["database"] = "connected"
+            except Exception:
+                health_status["services"]["database"] = "disconnected"
+                health_status["status"] = "degraded"
+            
+            return health_status
+        except Exception as e:
+            return {"status": "unhealthy", "error": str(e)}
     
     app.include_router(router)
     app.include_router(pairs_router)

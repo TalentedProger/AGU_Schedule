@@ -191,6 +191,21 @@ async def schedule_today(callback: CallbackQuery):
     from app.db.queries import get_user_by_telegram_id
     from app.utils.timezone import get_current_time_msk
     
+    # Get current day (0=Monday, 6=Sunday)
+    current_time = get_current_time_msk()
+    day_of_week = current_time.weekday()
+    
+    # Check if already showing this day (avoid unnecessary reload)
+    current_keyboard = callback.message.reply_markup
+    if current_keyboard:
+        # Find if this day is already marked with checkmark
+        for row in current_keyboard.inline_keyboard:
+            for btn in row:
+                if btn.callback_data == f"schedule:day:{day_of_week}" and "✓" in btn.text:
+                    # Already showing this day, just answer callback
+                    await callback.answer("📅 Уже показано расписание на сегодня")
+                    return
+    
     conn = await get_connection()
     try:
         user = await get_user_by_telegram_id(conn, callback.from_user.id)
@@ -198,10 +213,6 @@ async def schedule_today(callback: CallbackQuery):
         if not user:
             await callback.answer("❌ Пользователь не найден", show_alert=True)
             return
-        
-        # Get current day (0=Monday, 6=Sunday)
-        current_time = get_current_time_msk()
-        day_of_week = current_time.weekday()
         
         schedule_text = await get_schedule_for_day(conn, user, day_of_week)
         
@@ -222,6 +233,19 @@ async def schedule_tomorrow(callback: CallbackQuery):
     from app.db.queries import get_user_by_telegram_id
     from app.utils.timezone import get_current_time_msk
     
+    # Get tomorrow's day (0=Monday, 6=Sunday)
+    current_time = get_current_time_msk()
+    day_of_week = (current_time.weekday() + 1) % 7
+    
+    # Check if already showing this day (avoid unnecessary reload)
+    current_keyboard = callback.message.reply_markup
+    if current_keyboard:
+        for row in current_keyboard.inline_keyboard:
+            for btn in row:
+                if btn.callback_data == f"schedule:day:{day_of_week}" and "✓" in btn.text:
+                    await callback.answer("📆 Уже показано расписание на завтра")
+                    return
+    
     conn = await get_connection()
     try:
         user = await get_user_by_telegram_id(conn, callback.from_user.id)
@@ -229,10 +253,6 @@ async def schedule_tomorrow(callback: CallbackQuery):
         if not user:
             await callback.answer("❌ Пользователь не найден", show_alert=True)
             return
-        
-        # Get tomorrow's day (0=Monday, 6=Sunday)
-        current_time = get_current_time_msk()
-        day_of_week = (current_time.weekday() + 1) % 7
         
         schedule_text = await get_schedule_for_day(conn, user, day_of_week)
         
@@ -254,6 +274,15 @@ async def schedule_specific_day(callback: CallbackQuery):
     
     # Extract day from callback data (schedule:day:0 -> 0)
     day_of_week = int(callback.data.split(":")[-1])
+    
+    # Check if already showing this day (avoid unnecessary reload)
+    current_keyboard = callback.message.reply_markup
+    if current_keyboard:
+        for row in current_keyboard.inline_keyboard:
+            for btn in row:
+                if btn.callback_data == f"schedule:day:{day_of_week}" and "✓" in btn.text:
+                    await callback.answer("📅 Этот день уже показан")
+                    return
     
     conn = await get_connection()
     try:
