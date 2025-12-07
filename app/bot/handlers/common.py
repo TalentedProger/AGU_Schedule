@@ -15,15 +15,48 @@ from app.utils.constants import HELP_MESSAGE, WEEKDAY_NAMES
 router = Router()
 
 
-def get_schedule_keyboard():
-    """Create inline keyboard for schedule selection."""
+def get_schedule_keyboard(current_day: int = None):
+    """
+    Create inline keyboard for schedule selection with day navigation.
+    
+    Args:
+        current_day: Currently displayed day (0=Monday), None for initial selection
+    """
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-    buttons = [
-        [
-            InlineKeyboardButton(text="📅 На сегодня", callback_data="schedule:today"),
-            InlineKeyboardButton(text="📆 На завтра", callback_data="schedule:tomorrow")
-        ]
+    
+    # Day abbreviations
+    days = [
+        ("Пн", 0), ("Вт", 1), ("Ср", 2), 
+        ("Чт", 3), ("Пт", 4), ("Сб", 5)
     ]
+    
+    buttons = []
+    
+    # Quick access buttons
+    buttons.append([
+        InlineKeyboardButton(text="📅 Сегодня", callback_data="schedule:today"),
+        InlineKeyboardButton(text="📆 Завтра", callback_data="schedule:tomorrow")
+    ])
+    
+    # Day of week buttons (Mon-Sat)
+    day_buttons = []
+    for name, day in days:
+        # Mark current day with checkmark
+        if current_day is not None and day == current_day:
+            text = f"✓ {name}"
+        else:
+            text = name
+        day_buttons.append(InlineKeyboardButton(text=text, callback_data=f"schedule:day:{day}"))
+    
+    # Split into 2 rows of 3 buttons
+    buttons.append(day_buttons[:3])  # Пн Вт Ср
+    buttons.append(day_buttons[3:])  # Чт Пт Сб
+    
+    # Exit button
+    buttons.append([
+        InlineKeyboardButton(text="❌ Закрыть", callback_data="schedule:close")
+    ])
+    
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
@@ -174,7 +207,8 @@ async def schedule_today(callback: CallbackQuery):
         
         await callback.message.edit_text(
             schedule_text,
-            parse_mode="HTML"
+            parse_mode="HTML",
+            reply_markup=get_schedule_keyboard(day_of_week)
         )
         await callback.answer()
     finally:
@@ -204,11 +238,52 @@ async def schedule_tomorrow(callback: CallbackQuery):
         
         await callback.message.edit_text(
             schedule_text,
-            parse_mode="HTML"
+            parse_mode="HTML",
+            reply_markup=get_schedule_keyboard(day_of_week)
         )
         await callback.answer()
     finally:
         await conn.close()
+
+
+@router.callback_query(F.data.startswith("schedule:day:"))
+async def schedule_specific_day(callback: CallbackQuery):
+    """Show schedule for specific day of week."""
+    from app.db.connection import get_connection
+    from app.db.queries import get_user_by_telegram_id
+    
+    # Extract day from callback data (schedule:day:0 -> 0)
+    day_of_week = int(callback.data.split(":")[-1])
+    
+    conn = await get_connection()
+    try:
+        user = await get_user_by_telegram_id(conn, callback.from_user.id)
+        
+        if not user:
+            await callback.answer("❌ Пользователь не найден", show_alert=True)
+            return
+        
+        schedule_text = await get_schedule_for_day(conn, user, day_of_week)
+        
+        await callback.message.edit_text(
+            schedule_text,
+            parse_mode="HTML",
+            reply_markup=get_schedule_keyboard(day_of_week)
+        )
+        await callback.answer()
+    finally:
+        await conn.close()
+
+
+@router.callback_query(F.data == "schedule:close")
+async def schedule_close(callback: CallbackQuery):
+    """Close schedule view and return to main menu prompt."""
+    await callback.message.edit_text(
+        "📅 Расписание закрыто.\n\n"
+        "Используй кнопку «📅 Расписание» в меню, чтобы открыть снова.",
+        parse_mode="HTML"
+    )
+    await callback.answer()
 
 
 @router.message(F.text == "👤 Профиль")

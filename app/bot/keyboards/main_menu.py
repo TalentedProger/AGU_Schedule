@@ -21,6 +21,7 @@ def get_main_menu_keyboard() -> ReplyKeyboardMarkup:
                 KeyboardButton(text="ℹ️ Справка")
             ],
             [
+                KeyboardButton(text="🎨 Тема чата"),
                 KeyboardButton(text="💙 Поддержка")
             ]
         ],
